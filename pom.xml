@@ -12,6 +12,7 @@
     <modules>
         <module>auth-service</module>
         <module>eureka-server</module>
+        <module>notification</module>
         <module>order</module>
         <module>product</module>
     </modules>
