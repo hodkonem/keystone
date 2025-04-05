@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: auth-service
+  cloud:
+    eureka:
+      client:
+        enabled: true
+        register-with-eureka: true
+        fetch-registry: true
+        service-url:
+          defaultZone: http://localhost:8761/eureka/
+        healthcheck:
+          enabled: true
+server:
+  port: 0
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %C{1.} - %msg%n"
+  level:
+    org.springframework.cloud: INFO
+    com.netflix.eureka: INFO
+    ru.itwizardry.micro: DEBUG

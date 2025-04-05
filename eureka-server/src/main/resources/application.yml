@@ -1,14 +1,11 @@
-spring:
-  application:
-    name: eureka-server
 server:
   port: 8761
+
 eureka:
+  instance:
+    hostname: localhost
   client:
     register-with-eureka: false
     fetch-registry: false
-logging:
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %C{1.} - %msg%n"
-  level:
-    root: INFO
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
