@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: gateway
+  cloud:
+    eureka:
+      client:
+        enabled: true
+        register-with-eureka: true
+        fetch-registry: true
+        service-url:
+          defaultZone: http://localhost:8761/eureka/
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: auth
+          uri: lb://auth
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+
+        - id: product-service
+          uri: lb://product
+          predicates:
+            - Path=/api/products/**
+          filters:
+            - StripPrefix=1
+
+        - id: order-service
+          uri: lb://order
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - StripPrefix=1
+
+server:
+  port: 8081
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %C{1.} - %msg%n"
+  level:
+    org.springframework.cloud: INFO
+    com.netflix.eureka: INFO
+    ru.itwizardry.micro: DEBUG

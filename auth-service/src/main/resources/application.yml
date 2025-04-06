@@ -1,18 +1,18 @@
 spring:
   application:
-    name: auth-service
-  cloud:
-    eureka:
-      client:
-        enabled: true
-        register-with-eureka: true
-        fetch-registry: true
-        service-url:
-          defaultZone: http://localhost:8761/eureka/
-        healthcheck:
-          enabled: true
+    name: auth
+eureka:
+  client:
+    enabled: true
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    healthcheck:
+      enabled: false
+
 server:
-  port: 0
+  port: 8082
 
 logging:
   pattern:
