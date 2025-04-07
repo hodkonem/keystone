@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: git@github.com:hodkonem/mercury.git
+          clone-on-start: true
+          basedir: file://c:/tmp/git-c
+          username: hodkonem
+#          password:
+          default-label: main
+server:
+  port: 8888
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %C{1.} - %msg%n"

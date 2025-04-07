@@ -1,23 +1,7 @@
 spring:
   application:
     name: auth
-eureka:
-  client:
-    enabled: true
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-    healthcheck:
-      enabled: false
-
-server:
-  port: 8082
-
-logging:
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %C{1.} - %msg%n"
-  level:
-    org.springframework.cloud: INFO
-    com.netflix.eureka: INFO
-    ru.itwizardry.micro: DEBUG
+  config:
+    import: optional:configserver:http://localhost:8888
+  profiles:
+    active: micro
