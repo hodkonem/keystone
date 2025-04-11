@@ -3,11 +3,19 @@ server:
 
 spring:
   application:
-    name: eserver
+    name: eureka-server
+  profiles:
+    active: docker
   config:
-    import: optional:configserver:http://localhost:8888
+    import: optional:configserver:http://config-server:8888
 
 eureka:
+  instance:
+    hostname: eureka-server
+    prefer-ip-address: false
+
   client:
     register-with-eureka: false
     fetch-registry: false
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/

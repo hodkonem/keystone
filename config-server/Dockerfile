@@ -2,14 +2,14 @@ FROM maven:3.9.6-eclipse-temurin-17 AS builder
 
 WORKDIR /build
 COPY pom.xml .
-
 RUN mvn -B install -N -DskipTests
 
 WORKDIR /build/config-server
 COPY config-server/pom.xml .
 COPY config-server/src ./src
 
-RUN mvn -B clean package -DskipTests
+# Собираем с явным указанием на spring-boot-maven-plugin
+RUN mvn -B package spring-boot:repackage -DskipTests
 
 FROM eclipse-temurin:17-jre-jammy
 

@@ -27,6 +27,7 @@ services:
     build:
       context: .
       dockerfile: eureka-server/Dockerfile
+    hostname: eureka-server
     ports:
       - "${EUREKA_PORT:-8761}:${EUREKA_PORT:-8761}"
     depends_on:
@@ -43,85 +44,86 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SERVER_PORT=${EUREKA_PORT:-8761}
+      - EUREKA_INSTANCE_HOSTNAME=eureka-server
 
   auth-service:
     build:
       context: .
       dockerfile: auth-service/Dockerfile
-    expose:
-      - "${AUTH_PORT:-8082}"
+    ports:
+      - "${AUTH_PORT:-8082}:${AUTH_PORT:-8082}"
     depends_on:
       - eureka-server
       - config-server
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:${AUTH_PORT:-8082}/actuator/health || exit 1" ]
       interval: 30s
-      timeout: 5s
+      timeout: 10s
       retries: 3
     networks:
       - microservices-net
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker,micro
       - SERVER_PORT=${AUTH_PORT:-8082}
 
   notification-service:
     build:
       context: .
       dockerfile: notification/Dockerfile
-    expose:
-      - "${NOTIFICATION_PORT:-8083}"
+    ports:
+      - "${NOTIFICATION_PORT:-8083}:${NOTIFICATION_PORT:-8083}"
     depends_on:
       - eureka-server
       - config-server
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:${NOTIFICATION_PORT:-8083}/actuator/health || exit 1" ]
       interval: 30s
-      timeout: 5s
+      timeout: 10s
       retries: 3
     networks:
       - microservices-net
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker,micro
       - SERVER_PORT=${NOTIFICATION_PORT:-8083}
 
   order-service:
     build:
       context: .
       dockerfile: order/Dockerfile
-    expose:
-      - "${ORDER_PORT:-8084}"
+    ports:
+      - "${ORDER_PORT:-8084}:${ORDER_PORT:-8084}"
     depends_on:
       - eureka-server
       - config-server
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:${ORDER_PORT:-8084}/actuator/health || exit 1" ]
       interval: 30s
-      timeout: 5s
+      timeout: 10s
       retries: 3
     networks:
       - microservices-net
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker,micro
       - SERVER_PORT=${ORDER_PORT:-8084}
 
   product-service:
     build:
       context: .
       dockerfile: product/Dockerfile
-    expose:
-      - "${PRODUCT_PORT:-8085}"
+    ports:
+      - "${PRODUCT_PORT:-8085}:${PRODUCT_PORT:-8085}"
     depends_on:
       - eureka-server
       - config-server
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:${PRODUCT_PORT:-8085}/actuator/health || exit 1" ]
       interval: 30s
-      timeout: 5s
+      timeout: 10s
       retries: 3
     networks:
       - microservices-net
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker,micro
       - SERVER_PORT=${PRODUCT_PORT:-8085}
 
   gateway:
@@ -141,7 +143,7 @@ services:
     networks:
       - microservices-net
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker,micro
       - SERVER_PORT=${GATEWAY_PORT:-8080}
 
 networks:
@@ -149,4 +151,4 @@ networks:
     driver: bridge
 
 volumes:
-  config-repo:  # Должен быть на том же уровне, что и networks
+  config-repo:
