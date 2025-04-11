@@ -40,3 +40,18 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Дополнительные исключения для Docker
+**/.gitignore
+**/.mvn/
+**/mvnw
+**/mvnw.cmd
+**/logs/
+**/*.log
+**/*.bak
+**/*.swp
+**/bin/
+**/build/
+**/out/
+**/dist/
+**/node_modules/

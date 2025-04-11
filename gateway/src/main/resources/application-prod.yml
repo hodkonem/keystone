@@ -1,0 +1,18 @@
+spring:
+  cloud:
+    config:
+      fail-fast: true
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: ${HOSTNAME:gateway}
+
+server:
+  port: 80
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics

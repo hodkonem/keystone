@@ -1,0 +1,13 @@
+# Переопределяет базовые настройки mvn spring-boot:run -Dspring.profiles.active=local
+spring:
+  cloud:
+    config:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+logging:
+  level:
+    org.springframework: INFO
+    ru.itwizardry: DEBUG
