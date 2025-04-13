@@ -19,7 +19,7 @@ RUN addgroup --system javauser && \
     chown -R javauser:javauser /app
 USER javauser
 
-COPY --from=builder --chown=javauser:javauser /build/notification/target/notification-*.jar app.jar
+COPY --from=builder /build/notification-service/target/notification-service.jar app.jar
 
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=50.0"
 

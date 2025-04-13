@@ -109,7 +109,7 @@ services:
   product-service:
     build:
       context: .
-      dockerfile: product/Dockerfile
+      dockerfile: product-service/Dockerfile
     ports:
       - "${PRODUCT_PORT}:${PRODUCT_PORT}"
     depends_on:
@@ -131,7 +131,7 @@ services:
   notification-service:
     build:
       context: .
-      dockerfile: notification/Dockerfile
+      dockerfile: notification-service/Dockerfile
     ports:
       - "${NOTIFICATION_PORT:-8083}:${NOTIFICATION_PORT:-8083}"
     depends_on:
@@ -151,7 +151,7 @@ services:
   order-service:
     build:
       context: .
-      dockerfile: order/Dockerfile
+      dockerfile: order-service/Dockerfile
     ports:
       - "${ORDER_PORT:-8084}:${ORDER_PORT:-8084}"
     depends_on:
@@ -168,10 +168,10 @@ services:
       - SPRING_PROFILES_ACTIVE=docker,micro
       - SERVER_PORT=${ORDER_PORT:-8084}
 
-  gateway:
+  api-gateway:
     build:
       context: .
-      dockerfile: gateway/Dockerfile
+      dockerfile: api-gateway/Dockerfile
     ports:
       - "${GATEWAY_PORT:-8080}:${GATEWAY_PORT:-8080}"
     depends_on:

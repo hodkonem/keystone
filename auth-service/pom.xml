@@ -17,7 +17,7 @@
         <java.version>17</java.version>
     </properties>
 
-        <dependencies>
+    <dependencies>
         <!-- Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -105,6 +105,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <finalName>auth-service</finalName>
+                </configuration>
             </plugin>
         </plugins>
     </build>
