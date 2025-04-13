@@ -9,6 +9,9 @@ target/
 *.iws
 *.iml
 *.ipr
+# Environment variables
+.env
+*.env
 
 # Исключения для некоторых необходимых файлов .idea
 !.idea/modules.xml

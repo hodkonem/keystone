@@ -46,25 +46,87 @@ services:
       - SERVER_PORT=${EUREKA_PORT:-8761}
       - EUREKA_INSTANCE_HOSTNAME=eureka-server
 
+  auth-db:
+    image: postgres:13
+    container_name: auth-db
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth-data:/var/lib/postgresql/data
+    networks:
+      - microservices-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  product-db:
+    image: postgres:13
+    container_name: product-db
+    environment:
+      POSTGRES_DB: product_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - product-data:/var/lib/postgresql/data
+    networks:
+      - microservices-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   auth-service:
     build:
       context: .
       dockerfile: auth-service/Dockerfile
     ports:
-      - "${AUTH_PORT:-8082}:${AUTH_PORT:-8082}"
+      - "${AUTH_PORT}:${AUTH_PORT}"
     depends_on:
       - eureka-server
       - config-server
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:${AUTH_PORT:-8082}/actuator/health || exit 1" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - microservices-net
+      - auth-db
     environment:
       - SPRING_PROFILES_ACTIVE=docker,micro
-      - SERVER_PORT=${AUTH_PORT:-8082}
+      - SERVER_PORT=${AUTH_PORT}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://auth-db:5432/auth_db
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=validate
+      - SPRING_FLYWAY_ENABLED=true
+      - JWT_SECRET=${JWT_SECRET}
+    networks:
+      - microservices-net
+
+  product-service:
+    build:
+      context: .
+      dockerfile: product/Dockerfile
+    ports:
+      - "${PRODUCT_PORT}:${PRODUCT_PORT}"
+    depends_on:
+      - eureka-server
+      - config-server
+      - product-db
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,micro
+      - SERVER_PORT=${PRODUCT_PORT}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://product-db:5432/product_db
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=validate
+      - SPRING_FLYWAY_ENABLED=true
+      - JWT_SECRET=${JWT_SECRET}
+    networks:
+      - microservices-net
 
   notification-service:
     build:
@@ -105,26 +167,6 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker,micro
       - SERVER_PORT=${ORDER_PORT:-8084}
-
-  product-service:
-    build:
-      context: .
-      dockerfile: product/Dockerfile
-    ports:
-      - "${PRODUCT_PORT:-8085}:${PRODUCT_PORT:-8085}"
-    depends_on:
-      - eureka-server
-      - config-server
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:${PRODUCT_PORT:-8085}/actuator/health || exit 1" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - microservices-net
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker,micro
-      - SERVER_PORT=${PRODUCT_PORT:-8085}
 
   gateway:
     build:
