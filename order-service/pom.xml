@@ -9,9 +9,9 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>order</artifactId>
-    <name>order</name>
-    <description>order</description>
+    <artifactId>order-service</artifactId>
+    <name>order-service</name>
+    <description>order-service</description>
 
     <properties>
         <java.version>17</java.version>
