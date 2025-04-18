@@ -1,4 +1,4 @@
-package ru.itwizardry.micro.auth.config;
+package ru.itwizardry.micro.product.config;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -20,7 +20,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -43,8 +42,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
+            SecretKey key = Keys.hmacShaKeyFor(jwtSecretKey.getEncoded());
             Claims claims = Jwts.parser()
-                    .verifyWith(jwtSecretKey)
+                    .verifyWith(key)
                     .build()
                     .parseSignedClaims(jwt)
                     .getPayload();
@@ -53,14 +53,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             List<String> roles = claims.get("roles", List.class);
 
             if (roles == null || roles.isEmpty()) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "No roles in token");
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "No roles assigned");
                 return;
             }
 
             var authorities = roles.stream()
                     .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
                     .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toList());
+                    .toList();
 
             var authentication = new UsernamePasswordAuthenticationToken(
                     username,
@@ -72,21 +72,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new WebAuthenticationDetailsSource().buildDetails(request)
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
         } catch (ExpiredJwtException ex) {
-            logger.error("JWT token expired", ex);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Expired JWT token");
             return;
         } catch (SignatureException ex) {
-            logger.error("Invalid JWT signature", ex);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT signature");
             return;
         } catch (JwtException | IllegalArgumentException ex) {
-            logger.error("JWT validation error", ex);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
             return;
         }
-
         filterChain.doFilter(request, response);
     }
 
