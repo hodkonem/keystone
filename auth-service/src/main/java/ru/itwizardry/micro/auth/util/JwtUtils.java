@@ -3,19 +3,30 @@ package ru.itwizardry.micro.auth.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import javax.crypto.SecretKey;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class JwtUtils {
+
+    public static final int MIN_JWT_LENGTH = 32;
+
     private JwtUtils() {
     }
 
     public static Claims validateAndExtractClaims(String jwt, SecretKey key) throws JwtException {
+        Objects.requireNonNull(jwt, "JWT cannot be null");
+
+        if (jwt.length() < MIN_JWT_LENGTH) {
+            throw new MalformedJwtException("Token too short");
+        }
+
         return Jwts.parser()
                 .verifyWith(key)
                 .build()

@@ -3,6 +3,7 @@ package ru.itwizardry.micro.auth.config;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -76,9 +77,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+        if (!StringUtils.hasText(bearerToken) || !bearerToken.startsWith("Bearer ")) {
+            return null;
         }
-        return null;
+
+        String jwt = bearerToken.substring(7);
+        if (jwt.length() < 32 || jwt.chars().filter(c -> c == '.').count() != 2) {
+            throw new MalformedJwtException("Invalid JWT format");
+        }
+        return jwt;
     }
 }
