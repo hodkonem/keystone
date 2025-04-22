@@ -25,9 +25,17 @@ import java.util.stream.Collectors;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final SecretKey jwtSecretKey;
+    private final List<String> permitAllEndpoints;
 
-    public JwtAuthenticationFilter(String jwtSecret) {
+    public JwtAuthenticationFilter(String jwtSecret, List<String> permitAllEndpoints) {
         this.jwtSecretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        this.permitAllEndpoints = permitAllEndpoints;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return permitAllEndpoints.stream().anyMatch(path::startsWith);
     }
 
     @Override

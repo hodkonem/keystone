@@ -11,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 public class AuthSecurityConfiguration {
@@ -18,11 +20,16 @@ public class AuthSecurityConfiguration {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
+    private static final List<String> PERMIT_ALL_ENDPOINTS = List.of(
+            "/auth/register",
+            "/auth/login"
+    );
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register", "/auth/login").permitAll()
+                        .requestMatchers(PERMIT_ALL_ENDPOINTS.toArray(String[]::new)).permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -32,7 +39,7 @@ public class AuthSecurityConfiguration {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtSecret);
+        return new JwtAuthenticationFilter(jwtSecret, PERMIT_ALL_ENDPOINTS);
     }
 
     @Bean
