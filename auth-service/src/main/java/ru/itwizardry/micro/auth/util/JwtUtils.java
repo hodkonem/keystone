@@ -1,0 +1,44 @@
+package ru.itwizardry.micro.auth.util;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import javax.crypto.SecretKey;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public final class JwtUtils {
+    private JwtUtils() {
+    }
+
+    public static Claims validateAndExtractClaims(String jwt, SecretKey key) throws JwtException {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(jwt)
+                .getPayload();
+    }
+
+    public static List<GrantedAuthority> extractAuthorities(Claims claims) {
+        List<String> roles = claims.get("roles", List.class);
+        if (roles == null || roles.isEmpty()) {
+            throw new JwtException("No roles in token");
+        }
+        return roles.stream()
+                .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+    }
+
+    public static String extractUsername(Claims claims) {
+        return claims.getSubject();
+    }
+
+    public static SecretKey getSecretKey(String secret) {
+        return Keys.hmacShaKeyFor(secret.getBytes());
+    }
+}
