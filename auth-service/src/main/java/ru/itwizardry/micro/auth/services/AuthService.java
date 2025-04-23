@@ -72,6 +72,10 @@ public class AuthService {
                 .compact();
     }
 
+    public boolean isUrlAccessible(String url) {
+        return url.equals("/register") || url.equals("/login");
+    }
+
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }

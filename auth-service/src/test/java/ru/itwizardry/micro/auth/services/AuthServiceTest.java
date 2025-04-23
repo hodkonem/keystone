@@ -39,6 +39,29 @@ class AuthServiceTest {
     }
 
     @Test
+    void securityFilterAllowAccessToPublicUrls() {
+        String loginUrl = "/login";
+        String registerUrl = "/register";
+
+        assertTrue(authService.isUrlAccessible(loginUrl));
+        assertTrue(authService.isUrlAccessible(registerUrl));
+    }
+
+    @Test
+    void registerUserShouldBeAccessibleWithoutAuthentication() {
+        String registerUrl = "/register";
+
+        assertTrue(authService.isUrlAccessible(registerUrl));
+    }
+
+    @Test
+    void loginUserShouldBeAccessibleWithoutAuthentication() {
+        String loginUrl = "/login";
+
+        assertTrue(authService.isUrlAccessible(loginUrl));
+    }
+
+    @Test
     void registerUserSuccess() {
         String username = "testuser";
         String password = "password";
