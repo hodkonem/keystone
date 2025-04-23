@@ -7,6 +7,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import ru.itwizardry.micro.auth.exceptions.InvalidRoleException;
 import ru.itwizardry.micro.auth.model.roles.ApplicationRole;
 
 import javax.crypto.SecretKey;
@@ -36,14 +37,19 @@ public final class JwtUtils {
     }
 
     public static List<GrantedAuthority> extractAuthorities(Claims claims) {
-        List<String> roles = claims.get("roles", List.class);
-        if (roles == null || roles.isEmpty()) {
+        List<String> roleClaims = claims.get("roles", List.class);
+        if (roleClaims == null || roleClaims.isEmpty()) {
             throw new JwtException("No roles in token");
         }
-        return roles.stream()
-                .map(ApplicationRole::fromSting)
-                .map(role -> new SimpleGrantedAuthority(role.getAuthority()))
-                .collect(Collectors.toList());
+
+        try {
+            return roleClaims.stream()
+                    .map(ApplicationRole::fromClaim)
+                    .map(role -> new SimpleGrantedAuthority(role.getAuthority()))
+                    .collect(Collectors.toList());
+        } catch (InvalidRoleException e) {
+            throw new JwtException("Invalid role in token");
+        }
     }
 
     public static String extractUsername(Claims claims) {

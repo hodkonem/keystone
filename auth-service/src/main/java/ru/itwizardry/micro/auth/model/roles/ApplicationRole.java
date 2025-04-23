@@ -1,25 +1,24 @@
 package ru.itwizardry.micro.auth.model.roles;
 
+import ru.itwizardry.micro.auth.exceptions.InvalidRoleException;
+
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public enum ApplicationRole {
-    ADMIN("ROLE_ADMIN"), USER("ROLE_USER");
+    ROLE_ADMIN,
+    ROLE_USER;
 
-    private final String authority;
-
-    ApplicationRole(String authority) {
-        this.authority = authority;
+    public static ApplicationRole fromClaim(String roleClaim) {
+        try {
+            return valueOf(roleClaim.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRoleException("Invalid role: " + roleClaim);
+        }
     }
 
     public String getAuthority() {
-        return authority;
-    }
-
-    public static ApplicationRole fromSting(String role) {
-        String normalizedRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
-        for (ApplicationRole r : values()) {
-            if (r.authority.equals(normalizedRole)) {
-                return r;
-            }
-        }
-        throw new IllegalArgumentException("Unknown role: " + role);
+        return this.name();
     }
 }
