@@ -96,7 +96,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void loginUserWhenUserNotFoundThenThrowsException() {
+    void loginUserWhenPasswordIncorrectThenThrowsBadCredentialException() {
         String username = "nonexistent";
         String password = "wrongpassword";
         String encodedPassword = "encodedPassword";
