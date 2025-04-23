@@ -7,6 +7,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import ru.itwizardry.micro.auth.model.roles.ApplicationRole;
 
 import javax.crypto.SecretKey;
 import java.util.List;
@@ -40,8 +41,8 @@ public final class JwtUtils {
             throw new JwtException("No roles in token");
         }
         return roles.stream()
-                .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
-                .map(SimpleGrantedAuthority::new)
+                .map(ApplicationRole::fromSting)
+                .map(role -> new SimpleGrantedAuthority(role.getAuthority()))
                 .collect(Collectors.toList());
     }
 
