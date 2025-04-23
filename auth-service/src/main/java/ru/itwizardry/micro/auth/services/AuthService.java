@@ -43,10 +43,6 @@ public class AuthService {
             throw new IllegalArgumentException("Username already exists");
         }
 
-        if (roles == null || roles.isEmpty()) {
-            roles = Set.of(Role.ROLE_USER);
-        }
-
         User user = new User();
         user.setUsername(username);
         user.setPassword(bCryptPasswordEncoder.encode(password));
