@@ -12,6 +12,7 @@ target/
 # Environment variables
 .env
 *.env
+!.env.example
 
 # Исключения для некоторых необходимых файлов .idea
 !.idea/modules.xml

@@ -42,7 +42,7 @@ services:
     networks:
       - microservices-net
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=prod,micro
       - SERVER_PORT=${EUREKA_PORT:-8761}
       - EUREKA_INSTANCE_HOSTNAME=eureka-server
 

@@ -77,7 +77,9 @@ class AuthControllerTest {
         assertNotNull(response.getBody());
         assertInstanceOf(Map.class, response.getBody());
         Map<?, ?> body = (Map<?, ?>) response.getBody();
-        assertEquals("Username already exists", body.get("error"));
+
+        assertTrue(body.containsKey("error"));
+        assertEquals("username already exists", body.get("error"));
     }
 
     @Test

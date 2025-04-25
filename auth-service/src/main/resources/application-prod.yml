@@ -1,0 +1,17 @@
+spring:
+  config:
+    import: optional:configserver:http://config-server:8888
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+jwt:
+  secret: ${PROD_JWT_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
