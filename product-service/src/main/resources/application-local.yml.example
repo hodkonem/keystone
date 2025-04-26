@@ -1,0 +1,14 @@
+# Шаблон для локальной разработки. Переименуйте в application-local.yml и заполните значения.
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:auth_dev}
+    username: ${DB_USERNAME:auth_user}
+    password: ${DB_PASSWORD:REPLACE_ME}  # Обязательно замените!
+
+jwt:
+  secret: ${JWT_SECRET:REPLACE_ME}
+
+# Другие локальные настройки...
+logging:
+  level:
+    root: DEBUG

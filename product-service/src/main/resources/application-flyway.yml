@@ -1,0 +1,8 @@
+spring:
+  flyway:
+    locations: classpath:db/migration
+    encoding: UTF-8
+    placeholder-prefix: "${"
+    placeholder-suffix: "}"
+    placeholders:
+      db_schema: public
