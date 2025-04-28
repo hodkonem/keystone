@@ -1,4 +1,4 @@
-package ru.itwizardry.micro.auth.util.impl;
+package ru.itwizardry.micro.common.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -7,9 +7,6 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import ru.itwizardry.micro.auth.exceptions.InvalidRoleException;
-import ru.itwizardry.micro.auth.model.roles.ApplicationRole;
-import ru.itwizardry.micro.auth.util.JwtService;
 
 import javax.crypto.SecretKey;
 import java.util.List;

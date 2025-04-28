@@ -17,6 +17,7 @@
         <module>notification-service</module>
         <module>order-service</module>
         <module>product-service</module>
+        <module>common-jwt</module>
     </modules>
 
     <properties>

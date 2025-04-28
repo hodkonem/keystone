@@ -13,7 +13,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import ru.itwizardry.micro.auth.util.JwtService;
+import ru.itwizardry.micro.common.jwt.JwtService;
+
 
 import java.io.IOException;
 import java.util.List;

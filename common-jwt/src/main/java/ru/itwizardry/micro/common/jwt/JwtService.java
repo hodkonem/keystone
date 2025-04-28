@@ -1,4 +1,4 @@
-package ru.itwizardry.micro.auth.util;
+package ru.itwizardry.micro.common.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

@@ -11,7 +11,8 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import ru.itwizardry.micro.auth.util.JwtService;
+import ru.itwizardry.micro.common.jwt.JwtService;
+
 
 import java.util.List;
 

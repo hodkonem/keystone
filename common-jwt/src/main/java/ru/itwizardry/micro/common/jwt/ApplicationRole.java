@@ -1,10 +1,4 @@
-package ru.itwizardry.micro.auth.model.roles;
-
-import ru.itwizardry.micro.auth.exceptions.InvalidRoleException;
-
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
+package ru.itwizardry.micro.common.jwt;
 
 public enum ApplicationRole {
     ROLE_ADMIN,
