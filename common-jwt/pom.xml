@@ -20,6 +20,14 @@
     </properties>
 
     <dependencies>
+        <!-- Servlet API (для фильтров) -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Остальные зависимости -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
@@ -38,7 +46,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <skip>true</skip> <!-- Отключаем repackage -->
+                    <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>

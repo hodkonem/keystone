@@ -10,6 +10,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import ru.itwizardry.micro.common.jwt.JwtService;
+import ru.itwizardry.micro.common.jwt.filters.JwtAuthenticationFilter;
 
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package ru.itwizardry.micro.auth.config;
+package ru.itwizardry.micro.common.jwt.filters;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -14,7 +14,6 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import ru.itwizardry.micro.common.jwt.JwtService;
-
 
 import java.io.IOException;
 import java.util.List;
@@ -47,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-                        Claims claims = jwtService.validateAndExtractClaims(jwt);
+            Claims claims = jwtService.validateAndExtractClaims(jwt);
             String username = jwtService.extractUsername(claims);
             var authorities = jwtService.extractAuthorities(claims);
 
