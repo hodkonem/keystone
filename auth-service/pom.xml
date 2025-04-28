@@ -23,6 +23,7 @@
         <h2.version>2.3.232</h2.version>
         <lombok.version>1.18.38</lombok.version>
         <mockito.version>5.11.0</mockito.version>
+        <common-jwt>1.0-SNAPSHOT</common-jwt>
     </properties>
 
     <dependencies>
@@ -97,7 +98,7 @@
         <dependency>
             <groupId>ru.itwizardry.micro</groupId>
             <artifactId>common-jwt</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${common-jwt}</version>
         </dependency>
 
         <!-- Lombok -->
