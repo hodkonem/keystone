@@ -22,7 +22,7 @@ spring:
         format_sql: true
 
   flyway:
-    locations: classpath:db/migration,classpath:db/test_migration
+    locations: classpath:db/test_migration
     clean-disabled: false
     baseline-version: 1000
     baseline-on-migrate: true

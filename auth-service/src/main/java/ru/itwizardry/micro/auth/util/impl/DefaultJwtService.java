@@ -1,4 +1,4 @@
-package ru.itwizardry.micro.auth.util;
+package ru.itwizardry.micro.auth.util.impl;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -9,24 +9,27 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import ru.itwizardry.micro.auth.exceptions.InvalidRoleException;
 import ru.itwizardry.micro.auth.model.roles.ApplicationRole;
+import ru.itwizardry.micro.auth.util.JwtService;
 
 import javax.crypto.SecretKey;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
-public final class JwtUtils {
-
+public class DefaultJwtService implements JwtService {
     public static final int MIN_JWT_LENGTH = 32;
+    private final SecretKey key;
 
-    private JwtUtils() {
+    public DefaultJwtService(String secret) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public static Claims validateAndExtractClaims(String jwt, SecretKey key) throws JwtException {
-        Objects.requireNonNull(jwt, "JWT cannot be null");
-
+    @Override
+    public Claims validateAndExtractClaims(String jwt) throws JwtException {
         if (jwt.length() < MIN_JWT_LENGTH) {
             throw new MalformedJwtException("Token too short");
+        }
+        if (jwt.chars().filter(c -> c == '.').count() != 2) {
+            throw new MalformedJwtException("Invalid JWT format");
         }
 
         return Jwts.parser()
@@ -36,7 +39,8 @@ public final class JwtUtils {
                 .getPayload();
     }
 
-    public static List<GrantedAuthority> extractAuthorities(Claims claims) {
+    @Override
+    public List<GrantedAuthority> extractAuthorities(Claims claims) {
         List<String> roleClaims = claims.get("roles", List.class);
         if (roleClaims == null || roleClaims.isEmpty()) {
             throw new JwtException("No roles in token");
@@ -52,11 +56,8 @@ public final class JwtUtils {
         }
     }
 
-    public static String extractUsername(Claims claims) {
+    @Override
+    public String extractUsername(Claims claims) {
         return claims.getSubject();
-    }
-
-    public static SecretKey getSecretKey(String secret) {
-        return Keys.hmacShaKeyFor(secret.getBytes());
     }
 }

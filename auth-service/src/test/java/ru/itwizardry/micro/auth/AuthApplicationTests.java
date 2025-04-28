@@ -16,8 +16,8 @@ class AuthApplicationTests {
 
     @BeforeEach
     void setUp() {
-        flyway.clean(); // Очищает базу данных
-        flyway.migrate(); // Выполняет миграции
+        flyway.clean();
+        flyway.migrate();
     }
 
     @Test
