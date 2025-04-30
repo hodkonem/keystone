@@ -10,7 +10,9 @@ import ru.itwizardry.micro.common.jwt.JwtService;
 public class JwtConfig {
 
     @Bean
-    public JwtService jwtService(@Value("${jwt.secret}") String jwtSecret) {
-        return new DefaultJwtService(jwtSecret);
+    public JwtService jwtService(
+            @Value("${jwt.secret}") String jwtSecret,
+            @Value("${jwt.expiration-ms}") long expirationMs) {
+        return new DefaultJwtService(jwtSecret, expirationMs);
     }
 }

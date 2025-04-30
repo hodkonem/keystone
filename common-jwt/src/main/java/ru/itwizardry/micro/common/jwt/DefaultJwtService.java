@@ -7,17 +7,21 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.crypto.SecretKey;
 import java.util.List;
+import java.util.Date;
 import java.util.stream.Collectors;
 
 public class DefaultJwtService implements JwtService {
     public static final int MIN_JWT_LENGTH = 32;
     private final SecretKey key;
+    private final long expirationMs;
 
-    public DefaultJwtService(String secret) {
+    public DefaultJwtService(String secret, long expirationMs) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        this.expirationMs = expirationMs;
     }
 
     @Override
@@ -56,5 +60,36 @@ public class DefaultJwtService implements JwtService {
     @Override
     public String extractUsername(Claims claims) {
         return claims.getSubject();
+    }
+
+    @Override
+    public String generateToken(UserDetails userDetails) {
+        validateUserDetails(userDetails);
+
+        return Jwts.builder()
+                .subject(userDetails.getUsername())
+                .claim("roles", getRoles(userDetails))
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .signWith(key)
+                .compact();
+    }
+
+    private List<String> getRoles(UserDetails userDetails) {
+        return userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+    }
+
+    private void validateUserDetails(UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new IllegalArgumentException("UserDetails cannot be null");
+        }
+        if (userDetails.getUsername() == null || userDetails.getUsername().isBlank()) {
+            throw new IllegalArgumentException("Username cannot be empty");
+        }
+        if (userDetails.getAuthorities() == null) {
+            throw new IllegalArgumentException("Authorities cannot be null");
+        }
     }
 }

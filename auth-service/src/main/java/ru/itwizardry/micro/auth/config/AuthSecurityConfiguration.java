@@ -24,12 +24,17 @@ public class AuthSecurityConfiguration {
             "/auth/login"
     );
 
+    private static final List<String> ADMIN_ENDPOINTS = List.of(
+            "/api/admin/**"
+    );
+
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(ADMIN_ENDPOINTS.toArray(String[]::new)).hasRole("ADMIN")
                         .requestMatchers(PERMIT_ALL_ENDPOINTS.toArray(String[]::new)).permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session

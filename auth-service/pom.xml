@@ -20,7 +20,6 @@
         <postgresql.version>42.7.5</postgresql.version>
         <flyway.version>10.20.1</flyway.version>
         <jjwt.version>0.12.6</jjwt.version>
-        <h2.version>2.3.232</h2.version>
         <lombok.version>1.18.38</lombok.version>
         <mockito.version>5.11.0</mockito.version>
         <common-jwt>1.0-SNAPSHOT</common-jwt>
@@ -139,9 +138,15 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>${h2.version}</version>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>1.19.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.19.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

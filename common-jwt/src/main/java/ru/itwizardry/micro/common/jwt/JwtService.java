@@ -12,4 +12,6 @@ public interface JwtService {
     List<GrantedAuthority> extractAuthorities(Claims claims);
 
     String extractUsername(Claims claims);
+
+    String generateToken(org.springframework.security.core.userdetails.UserDetails userDetails);
 }
