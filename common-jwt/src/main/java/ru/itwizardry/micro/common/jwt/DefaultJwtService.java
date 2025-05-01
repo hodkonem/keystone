@@ -42,19 +42,12 @@ public class DefaultJwtService implements JwtService {
 
     @Override
     public List<GrantedAuthority> extractAuthorities(Claims claims) {
-        List<String> roleClaims = claims.get("roles", List.class);
-        if (roleClaims == null || roleClaims.isEmpty()) {
-            throw new JwtException("No roles in token");
-        }
+        List<String> roles = claims.get("authorities", List.class);
 
-        try {
-            return roleClaims.stream()
-                    .map(ApplicationRole::fromClaim)
-                    .map(role -> new SimpleGrantedAuthority(role.getAuthority()))
-                    .collect(Collectors.toList());
-        } catch (InvalidRoleException e) {
-            throw new JwtException("Invalid role in token");
-        }
+        return roles.stream()
+                .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -68,7 +61,7 @@ public class DefaultJwtService implements JwtService {
 
         return Jwts.builder()
                 .subject(userDetails.getUsername())
-                .claim("roles", getRoles(userDetails))
+                .claim("authorities", getRoles(userDetails))
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(key)
@@ -78,7 +71,7 @@ public class DefaultJwtService implements JwtService {
     private List<String> getRoles(UserDetails userDetails) {
         return userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private void validateUserDetails(UserDetails userDetails) {

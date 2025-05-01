@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import ru.itwizardry.micro.auth.dto.LoginRequest;
 import ru.itwizardry.micro.auth.dto.RegisterRequest;
-import ru.itwizardry.micro.auth.entities.Role;
+import ru.itwizardry.micro.common.jwt.entities.Role;
 import ru.itwizardry.micro.auth.entities.User;
 import ru.itwizardry.micro.auth.services.AuthService;
 

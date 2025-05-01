@@ -22,4 +22,4 @@ spring:
       ddl-auto: validate
 
 server:
-  port: 8080  # Стандартный порт
+  port: 8081  # Стандартный порт

@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,7 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import ru.itwizardry.micro.auth.entities.Role;
+import ru.itwizardry.micro.common.jwt.entities.Role;
 import ru.itwizardry.micro.common.jwt.JwtService;
 
 import java.util.Set;
@@ -50,25 +49,30 @@ class AdminControllerTest {
     private JwtService jwtService;
 
     @Test
+    void accessAdminEndpoint_WithAdminRole_ShouldReturn200() throws Exception {
+        UserDetails admin = createUserWithRole("admin", Role.ROLE_ADMIN);
+        String token = jwtService.generateToken(admin);
+
+        mockMvc.perform(get("/api/admin")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void accessAdminEndpoint_WithUserRole_ShouldReturn403() throws Exception {
-        String token = generateTokenWithRole("user", Role.ROLE_USER);
+        UserDetails user = createUserWithRole("user", Role.ROLE_USER);
+        String token = jwtService.generateToken(user);
 
         mockMvc.perform(get("/api/admin")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
     }
 
-    private String generateTokenWithRole(String username, Role role) {
-        Set<GrantedAuthority> authorities = Set.of(
-                new SimpleGrantedAuthority(role.toString()) // или role.name() в зависимости от реализации
-        );
-
-        UserDetails userDetails = new User(
+    private UserDetails createUserWithRole(String username, Role role) {
+        return new User(
                 username,
                 "password",
-                authorities
+                Set.of(new SimpleGrantedAuthority(role.name()))
         );
-
-        return jwtService.generateToken(userDetails);
     }
 }

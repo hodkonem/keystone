@@ -2,7 +2,7 @@ package ru.itwizardry.micro.auth.converter;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
-import ru.itwizardry.micro.auth.entities.Role;
+import ru.itwizardry.micro.common.jwt.entities.Role;
 
 @Converter(autoApply = true)
 public class RoleConverter implements AttributeConverter<Role, String> {

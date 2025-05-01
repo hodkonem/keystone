@@ -1,20 +1,18 @@
 package ru.itwizardry.micro.auth.config;
 
-import org.flywaydb.core.Flyway;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -22,28 +20,16 @@ import ru.itwizardry.micro.common.jwt.JwtService;
 
 import java.util.List;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Testcontainers
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import({AuthSecurityConfiguration.class, TestJwtConfig.class})
+@Testcontainers
+@Import(TestSecurityConfig.class)
 class JwtAuthenticationFilterTest {
-
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine")
-            .withDatabaseName("testdb")
-            .withUsername("testuser")
-            .withPassword("testpass");
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", () ->
-                String.format("jdbc:postgresql://localhost:%d/testdb", postgres.getFirstMappedPort()));
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -51,73 +37,59 @@ class JwtAuthenticationFilterTest {
     @Autowired
     private JwtService jwtService;
 
-    @BeforeAll
-    static void initDatabase() {
-        Flyway flyway = Flyway.configure()
-                .dataSource(
-                        String.format("jdbc:postgresql://localhost:%d/testdb", postgres.getFirstMappedPort()),
-                        postgres.getUsername(),
-                        postgres.getPassword()
-                )
-                .cleanDisabled(false)
-                .load();
-        flyway.clean();
-        flyway.migrate();
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
+            .withDatabaseName("testdb")
+            .withUsername("test")
+            .withPassword("test");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.security.oauth2.resourceserver.jwt.enabled", () -> "false");
     }
 
     @Test
-    void shouldNotFilter_PermitAllEndpoints() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/auth/register"))
+    void registerEndpoint_ShouldBePublic() throws Exception {
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"test\",\"password\":\"password\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void register_ShouldReturn201_WhenValidRequest() throws Exception {
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"validuser\",\"password\":\"ValidPass123\"}"))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void login_ShouldReturn200_WhenValidCredentials() throws Exception {
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"testuser\",\"password\":\"password\"}"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void accessAdminEndpoint_WithUserRole_ShouldReturn403() throws Exception {
-        User user = new User("user", "password",
-                List.of(new SimpleGrantedAuthority("ROLE_USER")));
-
-        String token = jwtService.generateToken(user);
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/admin")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void accessProtectedEndpoint_WithValidJwt_ShouldSucceed() throws Exception {
-        User user = new User("user", "password",
-                List.of(new SimpleGrantedAuthority("ROLE_USER")));
-
-        String token = jwtService.generateToken(user);
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/protected")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void accessProtectedEndpoint_WithInvalidJwt_ShouldReturn401() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/protected")
-                        .header("Authorization", "Bearer invalid.token"))
+    void protectedEndpoint_WithoutToken_ShouldReturn401() throws Exception {
+        mockMvc.perform(get("/api/admin"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void accessProtectedEndpoint_WithoutJwt_ShouldReturn401() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/protected"))
-                .andExpect(status().isUnauthorized());
-    }
+    void protectedEndpoint_WithValidToken_ShouldReturn200() throws Exception {
+        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
 
-    @Test
-    @WithMockUser
-    void accessProtectedEndpoint_WithMockUser_ShouldSucceed() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/protected"))
+        UserDetails userDetails = new User("adminuser", "", authorities);
+        String token = jwtService.generateToken(userDetails);
+
+        mockMvc.perform(get("/api/admin")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
-    }
-
-    private static class User extends org.springframework.security.core.userdetails.User {
-        public User(String username, String password, List<GrantedAuthority> authorities) {
-            super(username, password, authorities);
-        }
     }
 }

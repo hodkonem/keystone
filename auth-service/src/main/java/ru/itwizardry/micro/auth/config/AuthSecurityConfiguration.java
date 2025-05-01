@@ -12,33 +12,21 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import ru.itwizardry.micro.common.jwt.JwtService;
 import ru.itwizardry.micro.common.jwt.filters.JwtAuthenticationFilter;
 
-
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class AuthSecurityConfiguration {
-
-    private static final List<String> PERMIT_ALL_ENDPOINTS = List.of(
-            "/auth/register",
-            "/auth/login"
-    );
-
-    private static final List<String> ADMIN_ENDPOINTS = List.of(
-            "/api/admin/**"
-    );
+    private static final List<String> PERMIT_ALL_ENDPOINTS = List.of("/auth/**");
 
     @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(ADMIN_ENDPOINTS.toArray(String[]::new)).hasRole("ADMIN")
-                        .requestMatchers(PERMIT_ALL_ENDPOINTS.toArray(String[]::new)).permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(PERMIT_ALL_ENDPOINTS.toArray(new String[0])).permitAll()
                         .anyRequest().authenticated())
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

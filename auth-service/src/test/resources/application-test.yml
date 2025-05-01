@@ -5,18 +5,31 @@ spring:
   cloud:
     config:
       enabled: false
+    discovery:
+      enabled: false
+  eureka:
+    client:
+      enabled: false
+      healthcheck:
+        enabled: false
+      fetch-registry: false
+      register-with-eureka: false
   main:
     allow-bean-definition-overriding: true
   test:
     database:
       replace: none
   security:
+    oauth2:
+      resourceserver:
+        jwt:
+          enabled: false
     user:
       name: testuser
       password: testpass
       roles: USER
   datasource:
-    url: jdbc:postgresql://localhost:${postgresContainer.getMappedPort(5432)}/testdb
+    url: jdbc:postgresql://localhost:5432/testdb
     username: testuser
     password: testpass
   hikari:

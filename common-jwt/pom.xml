@@ -20,15 +20,13 @@
     </properties>
 
     <dependencies>
-        <!-- Servlet API (для фильтров) -->
-        <dependency>
+               <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
             <version>6.0.0</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Остальные зависимости -->
-        <dependency>
+               <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
             <scope>provided</scope>
@@ -37,6 +35,11 @@
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>${jjwt.version}</version>
+        </dependency>
+
+                <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
     </dependencies>
 

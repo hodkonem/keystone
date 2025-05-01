@@ -1,27 +1,16 @@
+# application.yml (в git)
 spring:
-  application:
-    name: gateway
   config:
-    import: "configserver:http://config-server:8888"
-  cloud:
-    config:
-      fail-fast: true
-      retry:
-        initial-interval: 2000
-        max-interval: 5000
-        max-attempts: 5
+    import: optional:configserver:http://localhost:8888
+  
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:}
+    username: ${DB_USERNAME:}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 1
+      idle-timeout: 300000
+
 
 server:
-  port: ${SERVER_PORT:8080}
-
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_URL:http://eureka-server:8761/eureka}
-    registry-fetch-interval-seconds: 5
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,metrics,gateway
+  port: 8080

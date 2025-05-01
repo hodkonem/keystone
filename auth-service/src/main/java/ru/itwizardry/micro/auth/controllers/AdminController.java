@@ -5,15 +5,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+// CHECKSTYLE IGNORE ImportDeclarationCheck FOR NEXT 1 LINES
+import ru.itwizardry.micro.common.jwt.entities.Role;
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/api")
 public class AdminController {
 
-    @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> getAdminData() {
-        return ResponseEntity.ok("This is the admin data.");
+        return ResponseEntity.ok("Привет, админ!");
     }
 }
 

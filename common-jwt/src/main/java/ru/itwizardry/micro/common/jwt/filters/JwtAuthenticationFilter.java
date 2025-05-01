@@ -3,11 +3,12 @@ package ru.itwizardry.micro.common.jwt.filters;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -19,9 +20,12 @@ import java.io.IOException;
 import java.util.List;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    private static final String AUTH_HEADER = "Authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
+
     private final JwtService jwtService;
     private final List<String> permitAllEndpoints;
-
 
     public JwtAuthenticationFilter(JwtService jwtService, List<String> permitAllEndpoints) {
         this.jwtService = jwtService;
@@ -30,18 +34,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return permitAllEndpoints.stream().anyMatch(path::startsWith);
+        String path = request.getRequestURI().replaceFirst(request.getContextPath(), "");
+        return permitAllEndpoints.stream()
+                .anyMatch(endpoint -> path.startsWith(endpoint) ||
+                        path.equals(endpoint));
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+                                    FilterChain filterChain) throws ServletException, IOException {
+
+        if (shouldNotFilter(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
-            String jwt = getJwtFromRequest(request);
+            String jwt = resolveToken(request);
+
             if (jwt == null) {
+                log.warn("No JWT found for secured endpoint: {}", request.getRequestURI());
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing JWT token");
                 return;
             }
@@ -50,30 +63,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String username = jwtService.extractUsername(claims);
             var authorities = jwtService.extractAuthorities(claims);
 
-            var authentication = new UsernamePasswordAuthenticationToken(
-                    username, null, authorities);
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(username, null, authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            filterChain.doFilter(request, response);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            log.debug("Authenticated user: {} with roles: {}", username, authorities);
 
         } catch (ExpiredJwtException ex) {
-            logger.error("JWT token expired", ex);
+            log.error("JWT token expired", ex);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Expired JWT token");
-        } catch (SignatureException ex) {
-            logger.error("Invalid JWT signature", ex);
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT signature");
+            return;
         } catch (JwtException | IllegalArgumentException ex) {
-            logger.error("JWT validation error", ex);
+            log.error("Invalid JWT token", ex);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
+            return;
         }
+
+        filterChain.doFilter(request, response);
     }
 
-    private String getJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (!StringUtils.hasText(bearerToken) || !bearerToken.startsWith("Bearer ")) {
-            return null;
+    private String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader(AUTH_HEADER);
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
+            return bearerToken.substring(BEARER_PREFIX.length());
         }
-        return bearerToken.substring(7);
+        return null;
     }
 }

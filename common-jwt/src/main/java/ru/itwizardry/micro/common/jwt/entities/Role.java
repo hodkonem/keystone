@@ -1,4 +1,4 @@
-package ru.itwizardry.micro.auth.entities;
+package ru.itwizardry.micro.common.jwt.entities;
 
 import org.springframework.security.core.GrantedAuthority;
 

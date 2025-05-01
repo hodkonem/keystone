@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import ru.itwizardry.micro.auth.entities.Role;
+import ru.itwizardry.micro.common.jwt.entities.Role;
 import ru.itwizardry.micro.auth.entities.User;
 import ru.itwizardry.micro.auth.repositories.UserRepository;
 

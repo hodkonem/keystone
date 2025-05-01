@@ -7,14 +7,15 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import ru.itwizardry.micro.auth.entities.Role;
 import ru.itwizardry.micro.auth.entities.User;
 import ru.itwizardry.micro.auth.repositories.UserRepository;
+import ru.itwizardry.micro.common.jwt.entities.Role;
 
 import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -67,7 +68,7 @@ public class AuthService {
                 .subject(user.getUsername())
                 .claim("roles", roleNames)
                 .issuedAt(Date.from(Instant.now()))
-                .expiration(Date.from(Instant.now().plusSeconds(24 * 60 * 60)))
+                .expiration(Date.from(Instant.now().plusSeconds(TimeUnit.DAYS.toSeconds(1))))
                 .signWith(getSigningKey())
                 .compact();
     }
