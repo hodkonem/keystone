@@ -17,7 +17,9 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class AuthSecurityConfiguration {
-    private static final List<String> PERMIT_ALL_ENDPOINTS = List.of("/auth/**");
+    private static final List<String> PERMIT_ALL_ENDPOINTS = List.of(
+            "/auth/register",
+            "/auth/login");
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {

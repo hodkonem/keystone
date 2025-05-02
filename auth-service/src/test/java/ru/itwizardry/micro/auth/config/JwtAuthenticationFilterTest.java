@@ -55,7 +55,7 @@ class JwtAuthenticationFilterTest {
     void registerEndpoint_ShouldBePublic() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\":\"test\",\"password\":\"password\"}"))
+                        .content("{\"username\":\"test\",\"password\":\"password333333\"}"))
                 .andExpect(status().isBadRequest());
     }
 
