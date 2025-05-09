@@ -35,4 +35,7 @@ public class Order {
 
     @NotNull(message = "Creation date cannot be null")
     private LocalDateTime createdAt;
+
+    @NotNull(message = "User id is cannot be null")
+    private Long userId;
 }
