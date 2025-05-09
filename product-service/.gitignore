@@ -1,0 +1,73 @@
+### Общие игнорируемые файлы ###
+HELP.md
+*.log
+*.swp
+*.bak
+*.tmp
+*.orig
+
+### Maven ###
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+### IDE ###
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### Конфигурационные файлы ###
+# Локальные конфиги Spring Boot
+application-local.yml
+application-local.properties
+application-dev.yml
+application-dev.properties
+flyway.conf
+config/flyway.conf
+!application-local.yml.example
+
+# Файлы окружения
+.env
+*.env
+.env.*
+.secrets
+
+### Системные файлы ###
+.DS_Store
+Thumbs.db
+
+### Логи и дампы ###
+logs/
+*.log.*
+heapdump.hprof
+threaddump.hprof
+
+### Gradle ###
+build/
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+### Исключения ###
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
