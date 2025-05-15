@@ -10,8 +10,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.crypto.SecretKey;
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class DefaultJwtService implements JwtService {
@@ -55,12 +55,16 @@ public class DefaultJwtService implements JwtService {
         return claims.getSubject();
     }
 
-    @Override
-    public String generateToken(UserDetails userDetails) {
+    public Long extractUserId(Claims claims) {
+        return claims.get("userId", Long.class);
+    }
+
+    public String generateToken(UserDetails userDetails, Long userId) {
         validateUserDetails(userDetails);
 
         return Jwts.builder()
                 .subject(userDetails.getUsername())
+                .claim("userId", userId)
                 .claim("authorities", getRoles(userDetails))
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))

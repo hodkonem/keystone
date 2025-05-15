@@ -86,7 +86,7 @@ class JwtAuthenticationFilterTest {
         List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
 
         UserDetails userDetails = new User("adminuser", "", authorities);
-        String token = jwtService.generateToken(userDetails);
+        String token = jwtService.generateToken(userDetails, 123L); // добавлен userId
 
         mockMvc.perform(get("/api/admin")
                         .header("Authorization", "Bearer " + token))

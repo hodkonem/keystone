@@ -3,6 +3,7 @@ package ru.itwizardry.micro.common.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 
@@ -13,5 +14,7 @@ public interface JwtService {
 
     String extractUsername(Claims claims);
 
-    String generateToken(org.springframework.security.core.userdetails.UserDetails userDetails);
+    Long extractUserId(Claims claims);
+
+    String generateToken(UserDetails userDetails, Long userId);
 }

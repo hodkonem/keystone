@@ -1,8 +1,12 @@
 package ru.itwizardry.micro.order.services;
 
 import io.jsonwebtoken.Claims;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import ru.itwizardry.micro.common.jwt.JwtService;
 import ru.itwizardry.micro.order.client.ProductClient;
 import ru.itwizardry.micro.order.dto.OrderRequest;
@@ -12,51 +16,60 @@ import ru.itwizardry.micro.order.repositories.OrderRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
-    @Autowired
-    private OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
+    private final ProductClient productClient;
+    private final JwtService jwtService;
 
-    @Autowired
-    private ProductClient productClient;
-
-    @Autowired
-    private JwtService jwtService;
-
-    public Order createOrder(OrderRequest orderRequest, String token) {
-
-        Claims claims = jwtService.validateAndExtractClaims(token);
-
-        String username = jwtService.extractUsername(claims);
+    public Order createOrder(OrderRequest orderRequest) {
+        Long userId = getCurrentUserId();
 
         var product = productClient.getProductById(orderRequest.getProductId());
 
         if (product == null || product.getQuantity() < orderRequest.getQuantity()) {
-            throw new RuntimeException("Недостаточно товара на складе или товар не найден.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Недостаточно товара на складе или товар не найден.");
         }
 
-        Order order = new Order();
-        order.setProductId(orderRequest.getProductId());
-        order.setQuantity(orderRequest.getQuantity());
-        order.setStatus("CREATED");
-        order.setCreatedAt(LocalDateTime.now());
-        order.setUserId(Long.valueOf(username));
+        Order order = Order.builder()
+                .productId(orderRequest.getProductId())
+                .quantity(orderRequest.getQuantity())
+                .status("CREATED")
+                .createdAt(LocalDateTime.now())
+                .userId(userId)
+                .build();
 
         return orderRepository.save(order);
     }
 
-    public Order getOrderById(Long id, String token) {
-        String username = jwtService.extractUsername(jwtService.validateAndExtractClaims(token));
-        Order order = orderRepository.findById(id).orElseThrow(() -> new RuntimeException("Заказ не найден"));
-        if (!username.equals(order.getUserId().toString())) {
-            throw new RuntimeException("Нельзя получить заказ другого пользователя.");
+    public Order getOrderByIdForCurrentUser(Long id) {
+        Long userId = getCurrentUserId();
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Заказ не найден."));
+
+        if (!order.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Нет доступа к заказу.");
         }
+
         return order;
     }
 
-    public List<Order> getOrdersForUser(String token) {
-        String username = jwtService.extractUsername(jwtService.validateAndExtractClaims(token));
-        return orderRepository.findByUserId(Long.valueOf(username));
+    public List<Order> getOrdersForCurrentUser() {
+        Long userId = getCurrentUserId();
+        return orderRepository.findByUserId(userId);
+    }
+
+    private Long getCurrentUserId() {
+        Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getCredentials();
+        try {
+            return jwtService.extractUserId(claims);
+        } catch (Exception e) {
+            log.error("Ошибка извлечения userId из SecurityContext", e);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный токен или userId");
+        }
     }
 }

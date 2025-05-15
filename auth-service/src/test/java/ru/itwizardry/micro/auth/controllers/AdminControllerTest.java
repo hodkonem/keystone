@@ -51,7 +51,7 @@ class AdminControllerTest {
     @Test
     void accessAdminEndpoint_WithAdminRole_ShouldReturn200() throws Exception {
         UserDetails admin = createUserWithRole("admin", Role.ROLE_ADMIN);
-        String token = jwtService.generateToken(admin);
+        String token = jwtService.generateToken(admin, 1L);
 
         mockMvc.perform(get("/api/admin")
                         .header("Authorization", "Bearer " + token))
@@ -61,12 +61,13 @@ class AdminControllerTest {
     @Test
     void accessAdminEndpoint_WithUserRole_ShouldReturn403() throws Exception {
         UserDetails user = createUserWithRole("user", Role.ROLE_USER);
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateToken(user, 2L);
 
         mockMvc.perform(get("/api/admin")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
     }
+
 
     private UserDetails createUserWithRole(String username, Role role) {
         return new User(
