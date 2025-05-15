@@ -13,7 +13,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import ru.itwizardry.micro.common.jwt.JwtService;
 
@@ -54,14 +53,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-
         String header = request.getHeader(AUTH_HEADER);
-        if(header == null|| !header.startsWith(BEARER_PREFIX)){
+        if (header == null || !header.startsWith(BEARER_PREFIX)) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing JWT token");
             return;
         }
-
-
 
         try {
 
@@ -72,7 +68,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             var authorities = jwtService.extractAuthorities(claims);
 
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(username, null, authorities);
+                    new UsernamePasswordAuthenticationToken(username, claims, authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -90,5 +86,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
-
 }
