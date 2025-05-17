@@ -1,95 +1,131 @@
 package ru.itwizardry.micro.auth.config;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import ru.itwizardry.micro.common.jwt.JwtService;
+import ru.itwizardry.micro.common.jwt.filters.JwtAuthenticationFilter;
 
 import java.util.List;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-@Testcontainers
-@Import(TestSecurityConfig.class)
+@ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @InjectMocks
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Autowired
+    @Mock
     private JwtService jwtService;
 
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
-            .withDatabaseName("testdb")
-            .withUsername("test")
-            .withPassword("test");
+    @Mock
+    private org.springframework.security.core.userdetails.UserDetailsService userDetailsService;
 
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.security.oauth2.resourceserver.jwt.enabled", () -> "false");
+    @Mock
+    private HttpServletRequest request;
+
+    @Mock
+    private HttpServletResponse response;
+
+    @Mock
+    private FilterChain filterChain;
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
-    void registerEndpoint_ShouldBePublic() throws Exception {
-        mockMvc.perform(post("/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\":\"test\",\"password\":\"password333333\"}"))
-                .andExpect(status().isBadRequest());
+    void shouldAuthenticate_WhenTokenIsValid() throws Exception {
+        String token = "mock-token";
+        String username = "admin";
+
+        UserDetails userDetails = createUser(username, "ROLE_USER");
+
+        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(jwtService.extractUsername(token)).thenReturn(username);
+        when(userDetailsService.loadUserByUsername(username)).thenReturn(userDetails);
+        when(jwtService.isTokenValid(token, userDetails)).thenReturn(true);
+
+        jwtAuthenticationFilter.doFilter(request, response, filterChain);
+
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth);
+        assertEquals(username, auth.getName());
+        assertTrue(auth.isAuthenticated());
+
+        verify(filterChain).doFilter(request, response);
     }
 
     @Test
-    void register_ShouldReturn201_WhenValidRequest() throws Exception {
-        mockMvc.perform(post("/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\":\"validuser\",\"password\":\"ValidPass123\"}"))
-                .andExpect(status().isCreated());
+    void shouldNotAuthenticate_WhenNoTokenProvided() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn(null);
+
+        jwtAuthenticationFilter.doFilter(request, response, filterChain);
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(filterChain).doFilter(request, response);
     }
 
     @Test
-    void login_ShouldReturn200_WhenValidCredentials() throws Exception {
-        mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\":\"testuser\",\"password\":\"password\"}"))
-                .andExpect(status().isOk());
+    void shouldNotAuthenticate_WhenTokenIsInvalid() throws Exception {
+        String token = "invalid-token";
+        String username = "user";
+
+        UserDetails userDetails = createUser(username, "ROLE_USER");
+
+        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(jwtService.extractUsername(token)).thenReturn(username);
+        when(userDetailsService.loadUserByUsername(username)).thenReturn(userDetails);
+        when(jwtService.isTokenValid(token, userDetails)).thenReturn(false);
+
+        jwtAuthenticationFilter.doFilter(request, response, filterChain);
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(filterChain).doFilter(request, response);
     }
 
     @Test
-    void protectedEndpoint_WithoutToken_ShouldReturn401() throws Exception {
-        mockMvc.perform(get("/api/admin"))
-                .andExpect(status().isUnauthorized());
+    void shouldNotFail_WhenExceptionThrownDuringExtractUsername() throws Exception {
+        String token = "broken-token";
+
+        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(jwtService.extractUsername(token)).thenThrow(new RuntimeException("Token parsing error"));
+
+        jwtAuthenticationFilter.doFilter(request, response, filterChain);
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(filterChain).doFilter(request, response);
     }
 
     @Test
-    void protectedEndpoint_WithValidToken_ShouldReturn200() throws Exception {
-        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+    void shouldNotAuthenticate_WhenAuthorizationHeaderIsMalformed() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer ");
 
-        UserDetails userDetails = new User("adminuser", "", authorities);
-        String token = jwtService.generateToken(userDetails, 123L); // добавлен userId
+        jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
-        mockMvc.perform(get("/api/admin")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    private UserDetails createUser(String username, String role) {
+        return User.builder()
+                .username(username)
+                .password("pass")
+                .authorities(new SimpleGrantedAuthority(role))
+                .build();
     }
 }
