@@ -72,6 +72,17 @@ public class DefaultJwtService implements JwtService {
                 .compact();
     }
 
+    @Override
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        try {
+            Claims claims = validateAndExtractClaims(token);
+            String username = extractUsername(claims);
+            return username.equals(userDetails.getUsername());
+        } catch (JwtException e) {
+            return false;
+        }
+    }
+
     private List<String> getRoles(UserDetails userDetails) {
         return userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
