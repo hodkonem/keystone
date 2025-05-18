@@ -1,18 +1,17 @@
 package ru.itwizardry.micro.auth.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import ru.itwizardry.micro.common.jwt.DefaultJwtService;
 import ru.itwizardry.micro.common.jwt.JwtService;
 
 @Configuration
+@EnableConfigurationProperties(JwtProperties.class)
 public class JwtConfig {
 
     @Bean
-    public JwtService jwtService(
-            @Value("${jwt.secret}") String jwtSecret,
-            @Value("${jwt.expiration-ms}") long expirationMs) {
-        return new DefaultJwtService(jwtSecret, expirationMs);
+    public JwtService jwtService(JwtProperties props) {
+        return new DefaultJwtService(props.getSecret(), props.getExpiration());
     }
 }
