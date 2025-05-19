@@ -3,6 +3,7 @@ package ru.itwizardry.micro.auth.config;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import ru.itwizardry.micro.common.jwt.JwtConfig;
 import ru.itwizardry.micro.common.jwt.JwtProperties;
 import ru.itwizardry.micro.common.jwt.JwtService;
 
