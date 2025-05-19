@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -64,12 +65,15 @@ public class OrderService {
     }
 
     private Long getCurrentUserId() {
-        Claims claims = (Claims) SecurityContextHolder.getContext().getAuthentication().getCredentials();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getCredentials() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Отсутствует аутентификация");
+        }
+        Claims claims = (Claims) authentication.getCredentials();
         try {
-            return jwtService.extractUserId(claims);
-        } catch (Exception e) {
-            log.error("Ошибка извлечения userId из SecurityContext", e);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный токен или userId");
+            return Long.valueOf(jwtService.extractUsername(claims));
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный формат userId в токене");
         }
     }
 }
