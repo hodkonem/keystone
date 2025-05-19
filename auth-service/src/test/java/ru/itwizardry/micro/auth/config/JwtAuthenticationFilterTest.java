@@ -1,5 +1,6 @@
 package ru.itwizardry.micro.auth.config;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,11 +17,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import ru.itwizardry.micro.common.jwt.JwtService;
 import ru.itwizardry.micro.common.jwt.filters.JwtAuthenticationFilter;
 
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
@@ -52,11 +50,12 @@ class JwtAuthenticationFilterTest {
     void shouldAuthenticate_WhenTokenIsValid() throws Exception {
         String token = "mock-token";
         String username = "admin";
-
+        Claims claims = mock(Claims.class);
         UserDetails userDetails = createUser(username, "ROLE_USER");
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtService.extractUsername(token)).thenReturn(username);
+        when(jwtService.validateAndExtractClaims(token)).thenReturn(claims);
+        when(jwtService.extractUsername(claims)).thenReturn(username);
         when(userDetailsService.loadUserByUsername(username)).thenReturn(userDetails);
         when(jwtService.isTokenValid(token, userDetails)).thenReturn(true);
 
@@ -77,25 +76,26 @@ class JwtAuthenticationFilterTest {
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
-        verify(filterChain).doFilter(request, response);
+        verify(filterChain, never()).doFilter(any(), any());
     }
 
     @Test
     void shouldNotAuthenticate_WhenTokenIsInvalid() throws Exception {
         String token = "invalid-token";
         String username = "user";
-
+        Claims claims = mock(Claims.class);
         UserDetails userDetails = createUser(username, "ROLE_USER");
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtService.extractUsername(token)).thenReturn(username);
+        when(jwtService.validateAndExtractClaims(token)).thenReturn(claims);
+        when(jwtService.extractUsername(claims)).thenReturn(username);
         when(userDetailsService.loadUserByUsername(username)).thenReturn(userDetails);
         when(jwtService.isTokenValid(token, userDetails)).thenReturn(false);
 
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
-        verify(filterChain).doFilter(request, response);
+        verify(filterChain, never()).doFilter(any(), any());
     }
 
     @Test
@@ -103,12 +103,12 @@ class JwtAuthenticationFilterTest {
         String token = "broken-token";
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtService.extractUsername(token)).thenThrow(new RuntimeException("Token parsing error"));
+        when(jwtService.validateAndExtractClaims(token)).thenThrow(new RuntimeException("Token parsing error"));
 
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
-        verify(filterChain).doFilter(request, response);
+        verify(filterChain, never()).doFilter(any(), any());
     }
 
     @Test
@@ -118,7 +118,7 @@ class JwtAuthenticationFilterTest {
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
-        verify(filterChain).doFilter(request, response);
+        verify(filterChain, never()).doFilter(any(), any());
     }
 
     private UserDetails createUser(String username, String role) {
