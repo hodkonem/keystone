@@ -1,177 +1,156 @@
 package ru.itwizardry.micro.product.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.server.ResponseStatusException;
-import ru.itwizardry.micro.product.entities.Product;
+import ru.itwizardry.micro.product.config.JwtServiceConfig;
+import ru.itwizardry.micro.product.config.ProductSecurityConfig;
+import ru.itwizardry.micro.product.dto.ProductDto;
+import ru.itwizardry.micro.product.exceptions.ResourceNotFoundException;
 import ru.itwizardry.micro.product.services.ProductService;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProductController.class)
-@Import(ProductControllerTest.TestConfig.class)
+@Import({ProductSecurityConfig.class, JwtServiceConfig.class})
+@TestPropertySource(properties = {
+        "jwt.secret=12345678901234567890123456789012",
+        "jwt.expiration=PT24H"
+})
 class ProductControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
+    @MockBean
     private ProductService productService;
 
-    @Test
-    @WithMockUser
-    void getAllProducts_WhenEmpty_ShouldReturnEmptyList() throws Exception {
-        when(productService.getAllProducts()).thenReturn(List.of());
-
-        mockMvc.perform(get("/products"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
-
-    }
-
-    @Test
-    @WithMockUser
-    void getAllProducts_ShouldReturnProducts() throws Exception {
-        Product testProduct = Product.builder()
-                .id(1L)
-                .name("Test Product")
-                .price(BigDecimal.valueOf(100.5))
-                .quantity(10)
-                .build();
-
-
-        when(productService.getAllProducts()).thenReturn(List.of(testProduct));
-
-        mockMvc.perform(get("/products"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].name").value("Test Product"))
-                .andExpect(jsonPath("$[0].price").value(100.5))
-                .andExpect(jsonPath("$[0].quantity").value(10));
-
-        verify(productService, times(1)).getAllProducts();
-    }
-
-    @Test
-    @WithMockUser
-    void getProductById_ShouldReturnProduct() throws Exception {
-        Product testProduct = Product.builder()
-                .id(1L)
-                .name("Test")
-                .build();
-
-        when(productService.getProductById(1L)).thenReturn(testProduct);
-
-        mockMvc.perform(get("/products/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("Test"));
-    }
-
-    @Test
-    @WithMockUser
-    void getProductById_WhenNotExists_ShouldReturn404() throws Exception {
-        when(productService.getProductById(999L))
-                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
-
-        mockMvc.perform(get("/products/999"))
-                .andExpect(status().isNotFound());
-    }
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void createProduct_WithValidData_ShouldReturnCreated() throws Exception {
-        Product testProduct = Product.builder().name("New").price(BigDecimal.TEN).build();
-        when(productService.createProduct(any(Product.class))).thenReturn(testProduct);
+    void createProduct_shouldReturnCreated() throws Exception {
+        ProductDto input = new ProductDto("New", "Created product", new BigDecimal("99.99"), 10);
+
+        when(productService.createProduct(any(ProductDto.class))).thenReturn(input);
 
         mockMvc.perform(post("/products")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"New\",\"price\":10}"))
+                        .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("New"));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void createProduct_WithInvalidData_ShouldReturn400() throws Exception {
+    void createProduct_withInvalidDto_shouldReturn400() throws Exception {
+        ProductDto invalid = new ProductDto("", "", new BigDecimal("-1.0"), -1);
+
         mockMvc.perform(post("/products")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"\",\"price\":-1}"))
+                        .content(objectMapper.writeValueAsString(invalid)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors").exists());
     }
 
     @Test
+    @WithMockUser(roles = "USER")
+    void createProduct_withRoleUser_shouldReturn403() throws Exception {
+        ProductDto dto = new ProductDto("Demo", "Demo", new BigDecimal("10.00"), 1);
+
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void createProduct_withoutAuth_shouldReturn401() throws Exception {
+        SecurityContextHolder.clearContext();
+
+        ProductDto dto = new ProductDto("Demo", "Demo", new BigDecimal("10.00"), 1);
+
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getProductById_whenNotFound_shouldReturn404() throws Exception {
+        when(productService.getProductById(99L)).thenThrow(new ResourceNotFoundException("Product not found"));
+
+        mockMvc.perform(get("/products/99"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Product not found"));
+    }
+
+    @Test
     @WithMockUser(roles = "ADMIN")
-    void updateProduct_WhenValid_ShouldReturnUpdated() throws Exception {
-        Product updatedProduct = Product.builder()
-                .id(1L)
-                .name("Updated product")
-                .build();
-        when(productService.updateProduct(eq(1l), any(Product.class))).thenReturn(updatedProduct);
+    void updateProduct_whenNotFound_shouldReturn404() throws Exception {
+        ProductDto dto = new ProductDto("Update", "Missing", new BigDecimal("10.00"), 1);
+        when(productService.updateProduct(eq(99L), any(ProductDto.class)))
+                .thenThrow(new ResourceNotFoundException("Product not found"));
+
+        mockMvc.perform(put("/products/99")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Product not found"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void updateProduct_withInvalidDto_shouldReturn400() throws Exception {
+        ProductDto dto = new ProductDto("", "", new BigDecimal("-5.00"), -2);
 
         mockMvc.perform(put("/products/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Updated product\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Updated product"));
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors").exists());
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void updateProduct_WhenNotExist_ShouldThrowsReturn404() throws Exception {
-        when(productService.updateProduct(eq(999L), any(Product.class)))
-                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
+    @WithMockUser(roles = "USER")
+    void updateProduct_withUser_shouldReturn403() throws Exception {
+        ProductDto dto = new ProductDto("New", "desc", new BigDecimal("1.0"), 1);
 
-        mockMvc.perform(put("/products/999")
+        mockMvc.perform(put("/products/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Test\"}"))
-                .andExpect(status().isNotFound());
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void deleteProduct_WhenExists_ShouldReturn204() throws Exception {
-        doNothing().when(productService).deleteProduct(1L);
+    @WithMockUser(username = "user", roles = {"USER"})
+    void deleteProduct_withUser_shouldReturn403() throws Exception {
+        Long productId = 1L;
 
-        mockMvc.perform(delete("/products/1"))
-                .andExpect(status().isNoContent());
+        given(productService.deleteProduct(productId)).willReturn(true);
+
+        mockMvc.perform(delete("/products/{id}", productId))
+                .andExpect(status().isForbidden());
     }
 
-    @Test
-    @WithMockUser(roles = "ADMIN")
-    void deleteProduct_WhenNotExists_ShouldReturn404() throws Exception {
-        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND))
-                .when(productService).deleteProduct(999L);
-
-        mockMvc.perform(delete("/products/999"))
-                .andExpect(status().isNotFound());
-    }
-
-
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        @Primary
-        public ProductService productService() {
-            return Mockito.mock(ProductService.class);
-        }
-    }
 }

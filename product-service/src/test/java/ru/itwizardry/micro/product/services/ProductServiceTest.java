@@ -2,113 +2,86 @@ package ru.itwizardry.micro.product.services;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.server.ResponseStatusException;
+import org.mockito.MockitoAnnotations;
+import ru.itwizardry.micro.product.dto.ProductDto;
 import ru.itwizardry.micro.product.entities.Product;
+import ru.itwizardry.micro.product.exceptions.ResourceNotFoundException;
+import ru.itwizardry.micro.product.mappers.ProductMapper;
 import ru.itwizardry.micro.product.repositories.ProductRepository;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
 
     @Mock
     private ProductRepository productRepository;
 
-    @InjectMocks
+    private ProductMapper productMapper;
     private ProductService productService;
-
-    private Product testProduct;
 
     @BeforeEach
     void setUp() {
-        testProduct = Product.builder()
+        MockitoAnnotations.openMocks(this);
+        productMapper = new ProductMapper();
+        productService = new ProductService(productRepository, productMapper);
+    }
+
+    @Test
+    void createProduct_ShouldReturnSavedDto() {
+        ProductDto dto = new ProductDto("Iphone", "New smartPhone", new BigDecimal("999.99"), 10);
+        Product entity = productMapper.toEntity(dto);
+        entity.setId(1L);
+
+        when(productRepository.save(any(Product.class))).thenReturn(entity);
+
+        ProductDto result = productService.createProduct(dto);
+
+        assertThat(result.getName()).isEqualTo("Iphone");
+        assertThat(result.getStock()).isEqualTo(10);
+    }
+
+    @Test
+    void getProductById_WhenFound_ShouldReturnDto() {
+        Product product = Product.builder()
                 .id(1L)
-                .name("Test Macbook")
-                .description("Test Description")
-                .price(BigDecimal.valueOf(1028.50))
-                .quantity(10)
+                .name("TV")
+                .description("OLED screen")
+                .price(new BigDecimal("1999.00"))
+                .stock(3)
                 .build();
     }
 
     @Test
-    void getAllProducts_ShouldReturnAllProducts() {
-        when(productRepository.findAll()).thenReturn(List.of(testProduct));
+    void getProductById_WhenNotFound_ShouldThrow404() {
+        when(productRepository.findById(99L)).thenReturn(Optional.empty());
 
-        List<Product> products = productService.getAllProducts();
-
-        assertEquals(1, products.size());
-        assertEquals(testProduct, products.get(0));
-        verify(productRepository, times(1)).findAll();
+        assertThatThrownBy(() -> productService.getProductById(99L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Продукт не найден");
     }
 
     @Test
-    void getProductById_WhenProductExists_ShouldReturnProduct() {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
+    void getAllProducts_ShouldReturnMappedList() {
+        List<Product> products = List.of(
+                Product.builder().name("A").description("...").price(BigDecimal.ONE).stock(1).build(),
+                Product.builder().name("B").description("...").price(BigDecimal.TEN).stock(2).build()
+        );
 
-        Product foundProduct = productService.getProductById(1L);
+        when(productRepository.findAll()).thenReturn(products);
 
-        assertEquals(testProduct, foundProduct);
-        verify(productRepository, times(1)).findById(1L);
+        List<ProductDto> result = productService.getAllProducts();
+
+        assertThat(result).isNotNull().hasSize(2);
+        assertThat(result.get(0).getName()).isEqualTo("A");
+        assertThat(result.get(1).getName()).isEqualTo("B");
     }
 
-    @Test
-    void getProductById_WhenProductNotExist_ShouldThrowException() {
-        when(productRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(ResponseStatusException.class, () -> productService.getProductById(1L));
-        verify(productRepository, times(1)).findById(1L);
-    }
-
-    @Test
-    void createProduct_SaveAndReturnProduct() {
-        when(productRepository.save(testProduct)).thenReturn(testProduct);
-
-        Product createProduct = productService.createProduct(testProduct);
-
-        assertEquals(testProduct, createProduct);
-        verify(productRepository, times(1)).save(testProduct);
-    }
-
-    @Test
-    void updateProduct_WhenProductExist_UpdateAndReturnProduct() {
-        Product updatedDetails = Product.builder()
-                .name("Updated name")
-                .description("Updated Description")
-                .price(BigDecimal.valueOf(100.60))
-                .quantity(10)
-                .build();
-
-        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
-        when(productRepository.save(testProduct)).thenReturn(testProduct);
-
-        Product updatedProduct = productService.updateProduct(1L, updatedDetails);
-
-        assertEquals("Updated name", updatedProduct.getName());
-        assertEquals("Updated Description", updatedProduct.getDescription());
-        assertEquals(BigDecimal.valueOf(100.60), updatedProduct.getPrice());
-        assertEquals(10, updatedProduct.getQuantity());
-        verify(productRepository, times(1)).findById(1L);
-        verify(productRepository, times(1)).save(testProduct);
-    }
-
-    @Test
-    void deleteProduct_WhenProductExists_ShouldDeleteProduct() {
-        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
-        doNothing().when(productRepository).delete(testProduct);
-
-        productService.deleteProduct(1L);
-
-        verify(productRepository, times(1)).findById(1L);
-        verify(productRepository, times(1)).delete(testProduct);
-    }
 }

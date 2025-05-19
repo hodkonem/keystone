@@ -1,12 +1,9 @@
 package ru.itwizardry.micro.product.entities;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "products")
@@ -15,34 +12,21 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
 
-    @NotBlank
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 500)
     private String description;
 
-    @NotNull
-    @Positive
-    @DecimalMin("0.01")
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(nullable = false)
     private BigDecimal price;
 
-    @NotNull
-    @PositiveOrZero
     @Column(nullable = false)
-    private Integer quantity;
-
-    @CreatedDate
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
+    private Integer stock;
 }
-
