@@ -4,12 +4,12 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.crypto.SecretKey;
+import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,12 +17,13 @@ import java.util.stream.Collectors;
 public class DefaultJwtService implements JwtService {
     public static final int MIN_JWT_LENGTH = 32;
     private final SecretKey key;
-    private final long expirationMs;
+    private final Duration expiration;
 
-    public DefaultJwtService(String secret, long expirationMs) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes());
-        this.expirationMs = expirationMs;
+    public DefaultJwtService(SecretKey key, Duration expiration) {
+        this.key = key;
+        this.expiration = expiration;
     }
+
 
     @Override
     public Claims validateAndExtractClaims(String jwt) throws JwtException {
@@ -67,7 +68,7 @@ public class DefaultJwtService implements JwtService {
                 .claim("userId", userId)
                 .claim("authorities", getRoles(userDetails))
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .expiration(new Date(System.currentTimeMillis() + expiration.toMillis()))
                 .signWith(key)
                 .compact();
     }
