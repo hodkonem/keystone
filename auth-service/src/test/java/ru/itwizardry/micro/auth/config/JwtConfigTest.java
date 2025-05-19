@@ -3,8 +3,10 @@ package ru.itwizardry.micro.auth.config;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import ru.itwizardry.micro.common.jwt.JwtProperties;
 import ru.itwizardry.micro.common.jwt.JwtService;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 
@@ -16,7 +18,7 @@ class JwtConfigTest {
     void shouldCreateJwtService_WithValidProperties() {
         JwtProperties properties = new JwtProperties();
         properties.setSecret("testSecretKey12345678901234567890123456789012");
-        properties.setExpiration(3600000L);
+        properties.setExpiration(Duration.ofMillis(3600000L));
 
         JwtConfig config = new JwtConfig();
 
