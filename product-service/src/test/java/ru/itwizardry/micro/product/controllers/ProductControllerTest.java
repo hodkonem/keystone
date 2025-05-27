@@ -1,27 +1,21 @@
 package ru.itwizardry.micro.product.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.itwizardry.micro.product.config.JwtServiceConfig;
-import ru.itwizardry.micro.product.config.ProductSecurityConfig;
+import ru.itwizardry.micro.product.config.JwtTestSecurityConfig;
 import ru.itwizardry.micro.product.dto.ProductDto;
 import ru.itwizardry.micro.product.exceptions.ResourceNotFoundException;
 import ru.itwizardry.micro.product.services.ProductService;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,11 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProductController.class)
-@Import({ProductSecurityConfig.class, JwtServiceConfig.class})
-@TestPropertySource(properties = {
-        "jwt.secret=12345678901234567890123456789012",
-        "jwt.expiration=PT24H"
-})
+@Import(JwtTestSecurityConfig.class)
 class ProductControllerTest {
 
     @Autowired

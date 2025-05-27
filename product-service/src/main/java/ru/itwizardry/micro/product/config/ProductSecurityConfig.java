@@ -1,5 +1,6 @@
 package ru.itwizardry.micro.product.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -21,12 +22,12 @@ import java.util.List;
 @EnableMethodSecurity
 public class ProductSecurityConfig {
 
-    private static final List<String> PERMIT_ALL_ENDPOINTS = List.of("/products/**");
-
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+        System.out.println("=== ProductSecurityConfig is applied ===");
+
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
@@ -41,7 +42,9 @@ public class ProductSecurityConfig {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService) {
+        System.out.println("=== JwtFilterTestConfig: mock JwtAuthenticationFilter ===");
         return new JwtAuthenticationFilter(jwtService, userDetailsService);
     }
 }
