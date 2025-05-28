@@ -40,7 +40,12 @@ class ProductControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void createProduct_shouldReturnCreated() throws Exception {
-        ProductDto input = new ProductDto("New", "Created product", new BigDecimal("99.99"), 10);
+        ProductDto input = ProductDto.builder()
+                .name("New")
+                .description("desc")
+                .price(new BigDecimal("99.99"))
+                .stock(10)
+                .build();
 
         when(productService.createProduct(any(ProductDto.class))).thenReturn(input);
 
@@ -54,36 +59,48 @@ class ProductControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void createProduct_withInvalidDto_shouldReturn400() throws Exception {
-        ProductDto invalid = new ProductDto("", "", new BigDecimal("-1.0"), -1);
+        ProductDto invalid = ProductDto.builder()
+                .name("name")
+                .description("desc")
+                .price(new BigDecimal("-1.0"))
+                .stock(-1)
+                .build();
 
         mockMvc.perform(post("/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalid)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors").exists());
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errors").exists());
     }
 
     @Test
     @WithMockUser(roles = "USER")
     void createProduct_withRoleUser_shouldReturn403() throws Exception {
-        ProductDto dto = new ProductDto("Demo", "Demo", new BigDecimal("10.00"), 1);
+        ProductDto dto = ProductDto.builder()
+                .name("name")
+                .description("desc")
+                .price(new BigDecimal("10.00"))
+                .stock(1)
+                .build();
 
         mockMvc.perform(post("/products")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isForbidden());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto))).andExpect(status().isForbidden());
     }
 
     @Test
     void createProduct_withoutAuth_shouldReturn401() throws Exception {
         SecurityContextHolder.clearContext();
 
-        ProductDto dto = new ProductDto("Demo", "Demo", new BigDecimal("10.00"), 1);
+        ProductDto dto = ProductDto.builder()
+                .name("Demo")
+                .description("Demo")
+                .price(new BigDecimal("10.00"))
+                .stock(1)
+                .build();
 
         mockMvc.perform(post("/products")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isUnauthorized());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto))).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -98,38 +115,51 @@ class ProductControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void updateProduct_whenNotFound_shouldReturn404() throws Exception {
-        ProductDto dto = new ProductDto("Update", "Missing", new BigDecimal("10.00"), 1);
+        ProductDto dto = ProductDto.builder()
+                .name("Update")
+                .description("Missing")
+                .price(new BigDecimal("10.00"))
+                .stock(1)
+                .build();
+
         when(productService.updateProduct(eq(99L), any(ProductDto.class)))
                 .thenThrow(new ResourceNotFoundException("Product not found"));
 
         mockMvc.perform(put("/products/99")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isNotFound())
-                .andExpect(content().string("Product not found"));
+                .andExpect(status().isNotFound()).andExpect(content().string("Product not found"));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void updateProduct_withInvalidDto_shouldReturn400() throws Exception {
-        ProductDto dto = new ProductDto("", "", new BigDecimal("-5.00"), -2);
+        ProductDto dto = ProductDto.builder()
+                .name("")
+                .description("")
+                .price(new BigDecimal("-5.00"))
+                .stock(-2)
+                .build();
 
         mockMvc.perform(put("/products/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors").exists());
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errors").exists());
     }
 
     @Test
     @WithMockUser(roles = "USER")
     void updateProduct_withUser_shouldReturn403() throws Exception {
-        ProductDto dto = new ProductDto("New", "desc", new BigDecimal("1.0"), 1);
+        ProductDto dto = ProductDto.builder()
+                .name("New")
+                .description("desc")
+                .price(new BigDecimal("1.00"))
+                .stock(1)
+                .build();
 
         mockMvc.perform(put("/products/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isForbidden());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto))).andExpect(status().isForbidden());
     }
 
     @Test
@@ -139,8 +169,6 @@ class ProductControllerTest {
 
         given(productService.deleteProduct(productId)).willReturn(true);
 
-        mockMvc.perform(delete("/products/{id}", productId))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/products/{id}", productId)).andExpect(status().isForbidden());
     }
-
 }

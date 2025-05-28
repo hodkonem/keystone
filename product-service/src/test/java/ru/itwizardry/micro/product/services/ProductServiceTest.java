@@ -36,7 +36,13 @@ class ProductServiceTest {
 
     @Test
     void createProduct_ShouldReturnSavedDto() {
-        ProductDto dto = new ProductDto("Iphone", "New smartPhone", new BigDecimal("999.99"), 10);
+        ProductDto dto = ProductDto.builder()
+                .name("Iphone")
+                .description("New smartphone")
+                .price(new BigDecimal("999.99"))
+                .stock(10)
+                .build();
+
         Product entity = productMapper.toEntity(dto);
         entity.setId(1L);
 
@@ -83,5 +89,4 @@ class ProductServiceTest {
         assertThat(result.get(0).getName()).isEqualTo("A");
         assertThat(result.get(1).getName()).isEqualTo("B");
     }
-
 }
