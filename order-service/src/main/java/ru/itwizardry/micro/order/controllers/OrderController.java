@@ -8,7 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.itwizardry.micro.order.dto.OrderRequest;
 import ru.itwizardry.micro.order.entities.Order;
-import ru.itwizardry.micro.order.services.OrderService;
+import ru.itwizardry.micro.order.services.OrderServiceImpl;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final OrderService orderService;
+    private final OrderServiceImpl orderService;
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")

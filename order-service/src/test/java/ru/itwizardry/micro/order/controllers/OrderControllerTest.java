@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 import ru.itwizardry.micro.order.dto.OrderRequest;
 import ru.itwizardry.micro.order.entities.Order;
-import ru.itwizardry.micro.order.services.OrderService;
+import ru.itwizardry.micro.order.services.OrderServiceImpl;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,7 +31,7 @@ class OrderControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private OrderService orderService;
+    private OrderServiceImpl orderService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -39,8 +39,8 @@ class OrderControllerTest {
     @TestConfiguration
     static class TestConfig {
         @Bean
-        public OrderService orderService() {
-            return Mockito.mock(OrderService.class);
+        public OrderServiceImpl orderService() {
+            return Mockito.mock(OrderServiceImpl.class);
         }
     }
 

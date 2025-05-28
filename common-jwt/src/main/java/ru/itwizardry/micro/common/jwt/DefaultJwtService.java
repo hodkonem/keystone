@@ -24,7 +24,6 @@ public class DefaultJwtService implements JwtService {
         this.expiration = expiration;
     }
 
-
     @Override
     public Claims validateAndExtractClaims(String jwt) throws JwtException {
         if (jwt.length() < MIN_JWT_LENGTH) {

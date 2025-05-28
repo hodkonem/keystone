@@ -9,12 +9,15 @@ public class ProductMapper {
 
     public ProductDto toDto(Product product) {
         if (product == null) return null;
-        return new ProductDto(
-                product.getName(),
-                product.getDescription(),
-                product.getPrice(),
-                product.getStock()
-        );
+        return ProductDto.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .stock(product.getStock())
+                .build();
+
+
     }
 
     public Product toEntity(ProductDto dto) {
